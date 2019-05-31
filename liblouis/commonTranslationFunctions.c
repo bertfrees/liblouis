@@ -43,22 +43,26 @@ _lou_handlePassVariableTest(const widechar *instructions, int *IC, int *itsTrue)
 		return 1;
 
 	case pass_lt:
-		if (passVariables[instructions[*IC + 1]] >= instructions[*IC + 2]) *itsTrue = 0;
+		if (passVariables[instructions[*IC + 1]] >= (int)instructions[*IC + 2])
+			*itsTrue = 0;
 		*IC += 3;
 		return 1;
 
 	case pass_gt:
-		if (passVariables[instructions[*IC + 1]] <= instructions[*IC + 2]) *itsTrue = 0;
+		if (passVariables[instructions[*IC + 1]] <= (int)instructions[*IC + 2])
+			*itsTrue = 0;
 		*IC += 3;
 		return 1;
 
 	case pass_lteq:
-		if (passVariables[instructions[*IC + 1]] > instructions[*IC + 2]) *itsTrue = 0;
+		if (passVariables[instructions[*IC + 1]] > (int)instructions[*IC + 2])
+			*itsTrue = 0;
 		*IC += 3;
 		return 1;
 
 	case pass_gteq:
-		if (passVariables[instructions[*IC + 1]] < instructions[*IC + 2]) *itsTrue = 0;
+		if (passVariables[instructions[*IC + 1]] < (int)instructions[*IC + 2])
+			*itsTrue = 0;
 		*IC += 3;
 		return 1;
 

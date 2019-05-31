@@ -246,7 +246,7 @@ getToken(FileInfo *nested, CharsString *result, const char *description, int *la
 	while (!atEndOfLine(nested) && atTokenDelimiter(nested)) nested->linepos++;
 	result->length = 0;
 	while (!atEndOfLine(nested) && !atTokenDelimiter(nested)) {
-		int maxlen = MAXSTRING;
+		unsigned int maxlen = MAXSTRING;
 		if (result->length >= maxlen) {
 			compileError(nested, "more than %d characters (bytes)", maxlen);
 			return 0;
@@ -588,7 +588,7 @@ static int
 passFindCharacters(FileInfo *nested, widechar *instructions, int end,
 		widechar **characters, int *length) {
 	int IC = 0;
-	int lookback = 0;
+	unsigned int lookback = 0;
 
 	*characters = NULL;
 	*length = 0;
@@ -599,7 +599,7 @@ passFindCharacters(FileInfo *nested, widechar *instructions, int end,
 		switch (instruction) {
 		case pass_string:
 		case pass_dots: {
-			int count = instructions[IC + 1];
+			unsigned int count = instructions[IC + 1];
 			IC += 2;
 			if (count > lookback) {
 				*characters = &instructions[IC + lookback];
@@ -1056,7 +1056,7 @@ static const unsigned int first0Bit[MAXBYTES] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 
 
 static int
 parseChars(FileInfo *nested, CharsString *result, CharsString *token) {
-	int in = 0;
+	unsigned int in = 0;
 	int out = 0;
 	int lastOutSize = 0;
 	int lastIn;
@@ -1177,7 +1177,7 @@ _lou_extParseChars(const char *inString, widechar *outString) {
 	/* Parse external character strings */
 	CharsString wideIn;
 	CharsString result;
-	int k;
+	unsigned int k;
 	for (k = 0; inString[k] && k < MAXSTRING - 1; k++) wideIn.chars[k] = inString[k];
 	wideIn.chars[k] = 0;
 	wideIn.length = k;
@@ -1195,7 +1195,7 @@ parseDots(FileInfo *nested, CharsString *cells, const CharsString *token) {
 	/* get dot patterns */
 	widechar cell = 0; /* assembly place for dots */
 	int cellCount = 0;
-	int index;
+	unsigned int index;
 	int start = 0;
 
 	for (index = 0; index < token->length; index++) {
@@ -1296,7 +1296,7 @@ _lou_extParseDots(const char *inString, widechar *outString) {
 	/* Parse external dot patterns */
 	CharsString wideIn;
 	CharsString result;
-	int k;
+	unsigned int k;
 	for (k = 0; inString[k] && k < MAXSTRING - 1; k++) wideIn.chars[k] = inString[k];
 	wideIn.chars[k] = 0;
 	wideIn.length = k;
@@ -1392,7 +1392,7 @@ findRuleName(const CharsString *name, RuleName *ruleNames) {
 static int
 addRuleName(FileInfo *nested, CharsString *name, TranslationTableOffset *newRuleOffset,
 		RuleName **ruleNames, TranslationTableHeader *table) {
-	int k;
+	unsigned int k;
 	struct RuleName *nameRule;
 	if (!(nameRule = malloc(sizeof(*nameRule) + CHARSIZE * (name->length - 1)))) {
 		compileError(nested, "not enough memory");
@@ -1426,8 +1426,8 @@ deallocateRuleNames(RuleName **ruleNames) {
 
 static int
 compileSwapDots(FileInfo *nested, CharsString *source, CharsString *dest) {
-	int k = 0;
-	int kk = 0;
+	unsigned int k = 0;
+	unsigned int kk = 0;
 	CharsString dotsSource;
 	CharsString dotsDest;
 	dest->length = 0;
@@ -1488,7 +1488,7 @@ getNumber(widechar *source, widechar *dest) {
 /* Start of multipass compiler */
 
 static int
-passGetAttributes(CharsString *passLine, int *passLinepos,
+passGetAttributes(CharsString *passLine, unsigned int *passLinepos,
 		TranslationTableCharacterAttributes *passAttributes, FileInfo *passNested) {
 	int more = 1;
 	*passAttributes = 0;
@@ -1551,7 +1551,7 @@ passGetAttributes(CharsString *passLine, int *passLinepos,
 }
 
 static int
-passGetDots(CharsString *passLine, int *passLinepos, CharsString *passHoldString,
+passGetDots(CharsString *passLine, unsigned int *passLinepos, CharsString *passHoldString,
 		FileInfo *passNested) {
 	CharsString collectDots;
 	collectDots.length = 0;
@@ -1567,8 +1567,8 @@ passGetDots(CharsString *passLine, int *passLinepos, CharsString *passHoldString
 }
 
 static int
-passGetString(CharsString *passLine, int *passLinepos, CharsString *passHoldString,
-		FileInfo *passNested) {
+passGetString(CharsString *passLine, unsigned int *passLinepos,
+		CharsString *passHoldString, FileInfo *passNested) {
 	passHoldString->length = 0;
 	while (1) {
 		if ((*passLinepos >= passLine->length) || !passLine->chars[*passLinepos]) {
@@ -1589,7 +1589,8 @@ passGetString(CharsString *passLine, int *passLinepos, CharsString *passHoldStri
 }
 
 static int
-passGetNumber(CharsString *passLine, int *passLinepos, widechar *passHoldNumber) {
+passGetNumber(
+		CharsString *passLine, unsigned int *passLinepos, widechar *passHoldNumber) {
 	/* Convert a string of wide character digits to an integer */
 	*passHoldNumber = 0;
 	while ((*passLinepos < passLine->length) && (passLine->chars[*passLinepos] >= '0') &&
@@ -1609,7 +1610,7 @@ passGetVariableNumber(FileInfo *nested, CharsString *passLine, int *passLinepos,
 }
 
 static int
-passGetName(CharsString *passLine, int *passLinepos, CharsString *passHoldString,
+passGetName(CharsString *passLine, unsigned int *passLinepos, CharsString *passHoldString,
 		FileInfo *passNested, TranslationTableHeader *table) {
 	TranslationTableCharacterAttributes attr;
 	passHoldString->length = 0;
@@ -1660,9 +1661,9 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode,
 	const CharacterClass *class;
 	TranslationTableOffset ruleOffset = 0;
 	TranslationTableRule *rule = NULL;
-	int k;
-	int kk = 0;
-	int endTest = 0;
+	unsigned int k;
+	unsigned int kk = 0;
+	unsigned int endTest = 0;
 	widechar *passInstructions = passRuleDots.chars;
 	int passIC = 0; /* Instruction counter */
 	passRuleChars.length = 0;
@@ -1670,7 +1671,7 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode,
 	CharsString passHoldString;
 	widechar passHoldNumber;
 	CharsString passLine;
-	int passLinepos = 0;
+	unsigned int passLinepos = 0;
 	TranslationTableCharacterAttributes passAttributes;
 	passHoldString.length = 0;
 	for (k = nested->linepos; k < nested->linelen; k++)
@@ -1991,14 +1992,14 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode,
 
 	{
 		widechar *characters;
-		int length;
+		unsigned int length;
 		int found = passFindCharacters(
 				passNested, passInstructions, passRuleDots.length, &characters, &length);
 
 		if (!found) return 0;
 
 		if (characters) {
-			for (k = 0; k < length; k += 1) passRuleChars.chars[k] = characters[k];
+			for (k = 0; k < length; k++) passRuleChars.chars[k] = characters[k];
 			passRuleChars.length = k;
 		}
 	}
@@ -2044,7 +2045,7 @@ static int
 compileGrouping(FileInfo *nested, int *lastToken, TranslationTableOffset *newRuleOffset,
 		TranslationTableRule **newRule, int noback, int nofor, RuleName **ruleNames,
 		TranslationTableHeader **table) {
-	int k;
+	unsigned int k;
 	CharsString name;
 	CharsString groupChars;
 	CharsString groupDots;
@@ -2109,7 +2110,7 @@ static int
 compileUplow(FileInfo *nested, int *lastToken, TranslationTableOffset *newRuleOffset,
 		TranslationTableRule **newRule, int noback, int nofor,
 		TranslationTableHeader **table) {
-	int k;
+	unsigned int k;
 	TranslationTableCharacter *upperChar;
 	TranslationTableCharacter *lowerChar;
 	TranslationTableCharacter *upperCell = NULL;
@@ -2118,7 +2119,7 @@ compileUplow(FileInfo *nested, int *lastToken, TranslationTableOffset *newRuleOf
 	CharsString ruleDots;
 	CharsString upperDots;
 	CharsString lowerDots;
-	int haveLowerDots = 0;
+	unsigned int haveLowerDots = 0;
 	TranslationTableCharacterAttributes attr;
 	if (!getRuleCharsText(nested, &ruleChars, lastToken)) return 0;
 	if (!getToken(nested, &ruleDots, "dots operand", lastToken)) return 0;
@@ -2196,7 +2197,7 @@ compileUplow(FileInfo *nested, int *lastToken, TranslationTableOffset *newRuleOf
 /* Functions for compiling hyphenation tables */
 
 typedef struct HyphenDict { /* hyphenation dictionary: finite state machine */
-	int numStates;
+	unsigned int numStates;
 	HyphenationState *states;
 } HyphenDict;
 
@@ -2214,7 +2215,7 @@ typedef struct HyphenHashTab { HyphenHashEntry *entries[HYPHENHASHSIZE]; } Hyphe
 /* a hash function from ASU - adapted from Gtk+ */
 static unsigned int
 hyphenStringHash(const CharsString *s) {
-	int k;
+	unsigned int k;
 	unsigned int h = 0, g;
 	for (k = 0; k < s->length; k++) {
 		h = (h << 4) + s->chars[k];
@@ -2250,7 +2251,7 @@ hyphenHashFree(HyphenHashTab *hashTab) {
 /* assumes that key is not already present! */
 static void
 hyphenHashInsert(HyphenHashTab *hashTab, const CharsString *key, int val) {
-	int i, j;
+	unsigned int i, j;
 	HyphenHashEntry *e;
 	i = hyphenStringHash(key) % HYPHENHASHSIZE;
 	if (!(e = malloc(sizeof(HyphenHashEntry)))) _lou_outOfMemory();
@@ -2266,7 +2267,7 @@ hyphenHashInsert(HyphenHashTab *hashTab, const CharsString *key, int val) {
 /* return val if found, otherwise DEFAULTSTATE */
 static int
 hyphenHashLookup(HyphenHashTab *hashTab, const CharsString *key) {
-	int i, j;
+	unsigned int i, j;
 	HyphenHashEntry *e;
 	if (key->length == 0) return 0;
 	i = hyphenStringHash(key) % HYPHENHASHSIZE;
@@ -2319,7 +2320,7 @@ compileHyphenation(FileInfo *nested, CharsString *encoding, int *lastToken,
 	CharsString word;
 	char pattern[MAXSTRING + 1];
 	unsigned int stateNum = 0, lastState = 0;
-	int i, j, k = encoding->length;
+	unsigned int i, j, k = encoding->length;
 	widechar ch;
 	int found;
 	HyphenHashEntry *e;
@@ -2497,7 +2498,7 @@ compileRule(FileInfo *nested, CharacterClass **characterClasses,
 	TranslationTableCharacterAttributes before = 0;
 	TranslationTableCharacter *c = NULL;
 	widechar *patterns = NULL;
-	int k, i;
+	unsigned int k, i;
 	int noback, nofor;
 	noback = nofor = 0;
 	TranslationTableOffset tmp_offset;
@@ -3392,7 +3393,7 @@ doOpcode:
 			if (class) {
 				// there is a class with that name or a new class was successfully created
 				if (getCharacters(nested, &characters, &lastToken)) {
-					int index;
+					unsigned int index;
 					for (index = 0; index < characters.length; ++index) {
 						TranslationTableRule *defRule;
 						TranslationTableCharacter *character = definedCharOrDots(
@@ -3905,7 +3906,7 @@ includeFile(FileInfo *nested, CharsString *includedFile,
 		short opcodeLengths[], TranslationTableOffset *newRuleOffset,
 		TranslationTableRule **newRule, RuleName **ruleNames,
 		TranslationTableHeader **table) {
-	int k;
+	unsigned int k;
 	char includeThis[MAXSTRING];
 	char **tableFiles;
 	int rv;

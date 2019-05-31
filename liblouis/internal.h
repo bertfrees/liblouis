@@ -514,7 +514,7 @@ typedef struct { /* translation table */
 	char *emphClasses[MAX_EMPH_CLASSES + 1];
 	int seqPatternsCount;
 	widechar seqAfterExpression[SEQPATTERNSIZE];
-	int seqAfterExpressionLength;
+	unsigned int seqAfterExpressionLength;
 
 	/* emphRules, including caps. */
 	TranslationTableOffset emphRules[MAX_EMPH_CLASSES + 1][9];
@@ -611,11 +611,31 @@ typedef struct {
 	int lineNumber;
 	EncodingType encoding;
 	int status;
-	int linelen;
-	int linepos;
+	unsigned int linelen;
+	unsigned int linepos;
 	int checkencoding[2];
 	widechar line[MAXSTRING];
 } FileInfo;
+
+typedef struct {
+	int startMatch;
+	int startReplace;
+	int endReplace;
+	int endMatch;
+} PassRuleMatch;
+
+typedef struct {
+	int bufferIndex;
+	const widechar *chars;
+	int length;
+} InString;
+
+typedef struct {
+	int bufferIndex;
+	widechar *chars;
+	int maxlength;
+	int length;
+} OutString;
 
 /* The following function definitions are hooks into
  * compileTranslationTable.c. Some are used by other library modules.
