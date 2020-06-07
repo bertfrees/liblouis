@@ -34,6 +34,7 @@ EXTRA_DIST =					\
 	de-g2-specs.yaml			\
 	el-backward.yaml			\
 	el-forward.yaml				\
+	en-g3.yaml			\
 	en-GB-g2_backward.yaml			\
 	en-GB-g2_harness.yaml			\
 	en-gb-g1_harness.yaml			\
