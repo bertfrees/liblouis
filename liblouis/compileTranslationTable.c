@@ -1744,7 +1744,10 @@ passGetNumber(CharsString *passLine, int *passLinepos, widechar *passHoldNumber)
 static int
 passGetVariableNumber(FileInfo *nested, CharsString *passLine, int *passLinepos,
 		widechar *passHoldNumber) {
-	if (!passGetNumber(passLine, passLinepos, passHoldNumber)) return 0;
+	if (!passGetNumber(passLine, passLinepos, passHoldNumber)) {
+		compileError(nested, "missing variable number");
+		return 0;
+	}
 	if ((*passHoldNumber >= 0) && (*passHoldNumber < NUMVAR)) return 1;
 	compileError(nested, "variable number out of range");
 	return 0;
@@ -1862,6 +1865,10 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode, int noback, i
 			passLinepos++;
 			passInstructions[passIC++] = pass_string;
 			passGetString(&passLine, &passLinepos, &passHoldString, passNested);
+			if (passHoldString.length == 0) {
+				compileError(nested, "empty string in test part");
+				return 0;
+			}
 			goto testDoCharsDots;
 		case pass_dots:
 			if (!verifyStringOrDots(nested, opcode, 0, 0, nofor)) {
@@ -1870,8 +1877,11 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode, int noback, i
 			passLinepos++;
 			passInstructions[passIC++] = pass_dots;
 			passGetDots(&passLine, &passLinepos, &passHoldString, passNested);
+			if (passHoldString.length == 0) {
+				compileError(nested, "expected dot pattern after @ operand in test part");
+				return 0;
+			}
 		testDoCharsDots:
-			if (passHoldString.length == 0) return 0;
 			if (passIC >= MAXSTRING) {
 				compileError(passNested,
 						"@ operand in test part of multipass operand too long");
@@ -2031,6 +2041,10 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode, int noback, i
 			passLinepos++;
 			passInstructions[passIC++] = pass_string;
 			passGetString(&passLine, &passLinepos, &passHoldString, passNested);
+			if (passHoldString.length == 0) {
+				compileError(nested, "empty string in action part");
+				return 0;
+			}
 			goto actionDoCharsDots;
 		case pass_dots:
 			if (!verifyStringOrDots(nested, opcode, 0, 1, nofor)) {
@@ -2039,8 +2053,12 @@ compilePassOpcode(FileInfo *nested, TranslationTableOpcode opcode, int noback, i
 			passLinepos++;
 			passGetDots(&passLine, &passLinepos, &passHoldString, passNested);
 			passInstructions[passIC++] = pass_dots;
+			if (passHoldString.length == 0) {
+				compileError(
+						nested, "expected dot pattern after @ operand in action part");
+				return 0;
+			}
 		actionDoCharsDots:
-			if (passHoldString.length == 0) return 0;
 			if (passIC >= MAXSTRING) {
 				compileError(passNested,
 						"@ operand in action part of multipass operand too long");
@@ -3361,7 +3379,8 @@ doOpcode:
 						c->attributes |= CTC_NumericMode;
 						(*table)->usesNumericMode = 1;
 					} else {
-						compileError(nested, "Numeric mode character undefined");
+						compileError(nested, "Numeric mode character undefined: %s",
+								_lou_showString(&ruleChars.chars[k], 1, 0));
 						return 0;
 					}
 				}
@@ -4240,13 +4259,17 @@ compileFile(const char *fileName, TranslationTableHeader **table,
 	nested.status = 0;
 	nested.lineNumber = 0;
 	if ((nested.in = fopen(nested.fileName, "rb"))) {
-		while (_lou_getALine(&nested)) compileRule(&nested, table, displayTable);
+		while (_lou_getALine(&nested))
+			if (!compileRule(&nested, table, displayTable)) {
+				if (!errorCount) compileError(&nested, "Rule could not be compiled");
+				break;
+			}
 		fclose(nested.in);
-		return 1;
-	} else
+	} else {
 		_lou_logMessage(LOU_LOG_ERROR, "Cannot open table '%s'", nested.fileName);
-	errorCount++;
-	return 0;
+		errorCount++;
+	}
+	return !errorCount;
 }
 
 /**
@@ -4292,6 +4315,9 @@ includeFile(FileInfo *nested, CharsString *includedFile, TranslationTableHeader 
 	}
 	rv = compileFile(*tableFiles, table, displayTable);
 	free_tablefiles(tableFiles);
+	if (!rv)
+		_lou_logMessage(LOU_LOG_ERROR, "%s:%d: Error in included file", nested->fileName,
+				nested->lineNumber);
 	return rv;
 }
 
